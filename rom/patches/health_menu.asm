@@ -241,3 +241,121 @@ StartMenu_Health::
 .tM125    db "x1.25@"
 .tM135    db "x1.35@"
 .tM150    db "x1.50@"
+
+; ── ShowHealthMsg: display a message based on wHealthMsgId, then clear it ──
+; Called via farcall from hook sites in other banks.
+; Message IDs:
+;   1 = Heal: tired (60%)        2 = Heal: not bad (85%)
+;   3 = Heal: well rested (full) 4 = XP: low energy
+;   5 = XP: burning calories     6 = Money: lazy day
+;   7 = Money: great workout     8 = Catch: shaky hands
+;   9 = Catch: steady hands
+
+ShowHealthMsg::
+	ld a, [wHealthMsgId]
+	and a
+	ret z
+	; look up message pointer
+	dec a
+	add a ; a *= 2 (pointer table index)
+	ld c, a
+	ld b, 0
+	ld hl, .msgTable
+	add hl, bc
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+	call PrintText
+	xor a
+	ld [wHealthMsgId], a
+	ret
+
+.msgTable:
+	dw .msgHealTired      ;  1 — Heal: 60% (bad sleep)
+	dw .msgHealOkay       ;  2 — Heal: 85% (okay sleep)
+	dw .msgHealRested     ;  3 — Heal: full + revive (great sleep)
+	dw .msgXPLow          ;  4 — XP: penalty
+	dw .msgXPNormal       ;  5 — XP: standard
+	dw .msgXPBoosted      ;  6 — XP: bonus
+	dw .msgMoneyLazy      ;  7 — Money: penalty
+	dw .msgMoneyNormal    ;  8 — Money: standard
+	dw .msgMoneyWorkout   ;  9 — Money: bonus
+	dw .msgCatchShaky     ; 10 — Catch: penalty
+	dw .msgCatchNormal    ; 11 — Catch: standard
+	dw .msgCatchSteady    ; 12 — Catch: bonus
+
+; ── Heal — based on sleep (1-3) ──
+.msgHealTired:
+	text "Poor sleep last"
+	line "night… Partial"
+	cont "heal only!"
+	prompt
+
+.msgHealOkay:
+	text "Slept okay last"
+	line "night. Healed"
+	cont "to 85 PCT!"
+	prompt
+
+.msgHealRested:
+	text "Great sleep last"
+	line "night! Full heal"
+	cont "and REVIVE!"
+	prompt
+
+; ── XP — based on calories (4-6) ──
+.msgXPLow:
+	text "Few calories"
+	line "burned yesterday."
+	cont "Less XP gained!"
+	prompt
+
+.msgXPNormal:
+	text "Calories on track"
+	line "yesterday."
+	cont "Standard XP."
+	prompt
+
+.msgXPBoosted:
+	text "Lots of calories"
+	line "burned yesterday!"
+	cont "XP boosted!"
+	prompt
+
+; ── Money — based on workout (7-9) ──
+.msgMoneyLazy:
+	text "No workout"
+	line "yesterday… Less"
+	cont "prize money!"
+	prompt
+
+.msgMoneyNormal:
+	text "Some exercise"
+	line "yesterday."
+	cont "Standard winnings."
+	prompt
+
+.msgMoneyWorkout:
+	text "Great workout"
+	line "yesterday! Extra"
+	cont "prize money!"
+	prompt
+
+; ── Catch — based on workout (10-12) ──
+.msgCatchShaky:
+	text "No workout"
+	line "yesterday…"
+	cont "Harder to catch!"
+	prompt
+
+.msgCatchNormal:
+	text "Some exercise"
+	line "yesterday. Normal"
+	cont "catch rate."
+	prompt
+
+.msgCatchSteady:
+	text "Big workout"
+	line "yesterday! Catch"
+	cont "rate boosted!"
+	prompt

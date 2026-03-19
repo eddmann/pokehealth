@@ -51,6 +51,8 @@ wHealthWorkoutMin::  db  ; workoutMinutes (capped at 255)
 wHealthHookRequest:: db  ; 1=xp 2=money 3=catch 4=heal
 ; Scratch for HEALTH menu display (safe during menu — hooks not active)
 wHealthMenuScratch:: ds 2
+; Dynamic message display: JS writes a message ID, ROM displays matching text.
+wHealthMsgId::       db  ; 0=none, 1-9=message IDs (see health_menu.asm)
 ASM
 
 # ─────────────────────────────────────────────────────────────────────
@@ -151,6 +153,14 @@ new = """\tinc hl
 \tand a
 \tjr nz, .healthXPWait
 .healthXPSkip
+; Display health message if JS set one (XP — shown before gained text)
+\tld a, [wHealthMsgId]
+\tand a
+\tjr z, .healthXPMsgDone
+\tpush hl
+\tfarcall ShowHealthMsg
+\tpop hl
+.healthXPMsgDone
 ; add the gained exp to the party mon's exp"""
 
 assert old in text, "ERROR: XP hook target not found in experience.asm"
@@ -188,7 +198,13 @@ new = """; PokéHealth money hook: let JS scale wAmountMoneyWon (BCD) in-place.
 .healthMoneySkip
 ; win money
 \tld hl, MoneyForWinningText
-\tcall PrintText"""
+\tcall PrintText
+; Display health message if JS set one
+\tld a, [wHealthMsgId]
+\tand a
+\tjr z, .healthMoneyMsgDone
+\tfarcall ShowHealthMsg
+.healthMoneyMsgDone"""
 
 assert old in text, "ERROR: money hook target not found in core.asm"
 text = text.replace(old, new, 1)
@@ -224,6 +240,14 @@ new = """; PokéHealth catch hook: let JS scale wEnemyMonActualCatchRate in-plac
 \tand a
 \tjr nz, .healthCatchWait
 .healthCatchSkip
+; Display health message if JS set one (catch)
+\tld a, [wHealthMsgId]
+\tand a
+\tjr z, .healthCatchMsgDone
+\tpush bc
+\tfarcall ShowHealthMsg
+\tpop bc
+.healthCatchMsgDone
 ; If Rand1 - Status > CatchRate, the ball fails to capture the Pokémon.
 \tld a, [wEnemyMonActualCatchRate]
 \tcp b
@@ -251,6 +275,7 @@ old = "\tpredef HealParty"
 
 new = """\tpredef HealParty
 ; PokéHealth heal hook: let JS apply tier-based HP cap / PP penalty / Revive.
+; Message display is deferred until after the healing animation (see below).
 \tld a, [wHealthInitialized]
 \tand a
 \tjr z, .healthHealSkip
@@ -264,6 +289,19 @@ new = """\tpredef HealParty
 
 assert old in text, "ERROR: heal hook target not found in pokecenter.asm"
 text = text.replace(old, new, 1)
+
+# Display the heal message AFTER the animation and "fighting fit" text.
+old2 = "\tld hl, PokemonFightingFitText\n\tcall PrintText"
+new2 = """\tld hl, PokemonFightingFitText
+\tcall PrintText
+; PokéHealth: show health-related heal message after the animation.
+\tld a, [wHealthMsgId]
+\tand a
+\tjr z, .healthHealMsgDone
+\tfarcall ShowHealthMsg
+.healthHealMsgDone"""
+assert old2 in text, "ERROR: PokemonFightingFitText not found in pokecenter.asm"
+text = text.replace(old2, new2, 1)
 open(path, 'w').write(text)
 print("  ✓ Heal hook trap applied")
 PYEOF

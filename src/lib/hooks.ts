@@ -39,6 +39,7 @@ export type HealthSymbols = {
   wHealthCaloriesHi: number;
   wHealthCaloriesLo: number;
   wHealthWorkoutMin: number;
+  wHealthMsgId: number;
   wAmountMoneyWon: number;
   wEnemyMonActualCatchRate: number;
   wPartyCount: number;
@@ -84,6 +85,35 @@ export function validateSymbols(
 type ReadMem = (addr: number) => number;
 type WriteMem = (addr: number, val: number) => void;
 
+// XP hook fires once per party member — only show the message on the first one.
+// Reset after 5s of no XP hooks (i.e. next battle).
+let xpMsgShown = false;
+let xpMsgTimer: ReturnType<typeof setTimeout> | null = null;
+
+function pickXpMsg(mult: number): number {
+  if (mult < 1.0) return MSG_XP_LOW;
+  if (mult > 1.0) return MSG_XP_BOOSTED;
+  return MSG_XP_NORMAL;
+}
+
+function pickMoneyMsg(mult: number): number {
+  if (mult < 1.0) return MSG_MONEY_LAZY;
+  if (mult > 1.0) return MSG_MONEY_WORKOUT;
+  return MSG_MONEY_NORMAL;
+}
+
+function pickCatchMsg(mult: number): number {
+  if (mult < 1.0) return MSG_CATCH_SHAKY;
+  if (mult > 1.0) return MSG_CATCH_STEADY;
+  return MSG_CATCH_NORMAL;
+}
+
+function pickHealMsg(tier: ActiveModifiers["healTier"]): number {
+  if (tier === "partial_60") return MSG_HEAL_TIRED;
+  if (tier === "partial_85") return MSG_HEAL_OKAY;
+  return MSG_HEAL_RESTED;
+}
+
 export function handleHook(
   hookId: number,
   sym: Record<string, number>,
@@ -94,18 +124,27 @@ export function handleHook(
   switch (hookId) {
     case HOOK_XP:
       handleXP(sym, readMem, writeMem, modifiers.xpMultiplier);
+      if (!xpMsgShown) {
+        setHealthMsg(sym, writeMem, pickXpMsg(modifiers.xpMultiplier));
+        xpMsgShown = true;
+      }
+      if (xpMsgTimer) clearTimeout(xpMsgTimer);
+      xpMsgTimer = setTimeout(() => { xpMsgShown = false; }, 5000);
       break;
     case HOOK_MONEY:
       handleMoney(sym, readMem, writeMem, modifiers.moneyMultiplier);
+      setHealthMsg(sym, writeMem, pickMoneyMsg(modifiers.moneyMultiplier));
       break;
     case HOOK_CATCH:
       handleCatch(sym, readMem, writeMem, modifiers.catchMultiplier);
+      setHealthMsg(sym, writeMem, pickCatchMsg(modifiers.catchMultiplier));
       break;
     case HOOK_HEAL:
       handleHeal(sym, readMem, writeMem, modifiers);
+      setHealthMsg(sym, writeMem, pickHealMsg(modifiers.healTier));
       break;
   }
-  // Clear the request to let the ROM's spin-wait exit
+  // Clear the hook request to let the ROM's spin-wait exit
   writeMem(sym["wHealthHookRequest"], 0);
 }
 
@@ -318,4 +357,31 @@ function numToBcd(n: number, len: number): number[] {
     result[i] = (hi << 4) | lo;
   }
   return result;
+}
+
+// ── Health message IDs ────────────────────────────────────────────
+// These match the ROM's ShowHealthMsg jump table in health_menu.asm.
+// Grouped by event: penalty → normal → bonus.
+const MSG_HEAL_TIRED    = 1;  // Heal: 60% (bad sleep)
+const MSG_HEAL_OKAY     = 2;  // Heal: 85% (okay sleep)
+const MSG_HEAL_RESTED   = 3;  // Heal: full + revive (great sleep)
+const MSG_XP_LOW        = 4;  // XP: penalty
+const MSG_XP_NORMAL     = 5;  // XP: standard
+const MSG_XP_BOOSTED    = 6;  // XP: bonus
+const MSG_MONEY_LAZY    = 7;  // Money: penalty
+const MSG_MONEY_NORMAL  = 8;  // Money: standard
+const MSG_MONEY_WORKOUT = 9;  // Money: bonus
+const MSG_CATCH_SHAKY   = 10; // Catch: penalty
+const MSG_CATCH_NORMAL  = 11; // Catch: standard
+const MSG_CATCH_STEADY  = 12; // Catch: bonus
+
+/** Write a message ID to WRAM for the ROM to display. */
+function setHealthMsg(
+  sym: Record<string, number>,
+  writeMem: WriteMem,
+  msgId: number,
+): void {
+  const addr = sym["wHealthMsgId"];
+  if (addr === undefined) return;
+  writeMem(addr, msgId);
 }
