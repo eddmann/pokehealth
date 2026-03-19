@@ -1,0 +1,34 @@
+{
+  "name": "pokehealth2",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "bun run emu:build && bun run rom:build && vite build",
+    "build:app": "vite build",
+    "preview": "vite preview",
+    "emu:build": "bash scripts/build-emu.sh",
+    "emu:clean": "rm -rf emulator/build public/wasm/binjgb.js public/wasm/binjgb.wasm",
+    "rom:build": "bash scripts/build-rom.sh",
+    "rom:clean": "rm -rf rom/build public/roms/pokered.gb public/roms/pokered.sym",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "vite-plugin-pwa": "^1.2.0"
+  },
+  "dependencies": {
+    "@pwa-kit/sdk": "^0.1.2",
+    "idb": "^8.0.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1"
+  }
+}

@@ -1,0 +1,6 @@
+[submodule "rom/pokered"]
+	path = rom/pokered
+	url = https://github.com/pret/pokered.git
+[submodule "emulator/binjgb"]
+	path = emulator/binjgb
+	url = https://github.com/binji/binjgb.git
