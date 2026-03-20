@@ -383,7 +383,6 @@ export class Emulator {
   }
 
   // ── Misc ──────────────────────────────────────────────────────────
-  // ── Misc ──────────────────────────────────────────────────────────
 
   captureThumbnail(): string | undefined {
     try { return this.canvas?.toDataURL("image/png"); }

@@ -139,6 +139,17 @@ export function useEmulator() {
     return loadFromSlot("autosave");
   }, [loadFromSlot]);
 
+  // Autosave when the tab becomes hidden (switch away, close, lock screen)
+  useEffect(() => {
+    const onVisChange = () => {
+      if (document.visibilityState === "hidden" && emulator.isReady) {
+        quickSave();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisChange);
+    return () => document.removeEventListener("visibilitychange", onVisChange);
+  }, [quickSave]);
+
   // Don't stop the emulator on unmount — it keeps running in the background
   // so health modifier writes from the Debug tab take effect immediately.
 

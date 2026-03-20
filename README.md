@@ -64,6 +64,12 @@ npx @pwa-kit/cli init ios --url "https://pokehealth.eddmann.workers.dev/" --feat
 
 Then open the generated Xcode project in `ios/`, and build to a device or simulator.
 
+## Disclaimer
+
+This project does not distribute any Nintendo-copyrighted content. The Pokémon Red ROM is built locally from the [pret/pokered](https://github.com/pret/pokered) disassembly — you must build it yourself with `bun run rom:build`. Pokémon is a trademark of Nintendo / Game Freak / Creatures Inc. This is a fan project with no commercial intent.
+
+The [binjgb](https://github.com/binji/binjgb) emulator is used under the MIT License.
+
 ## Project structure
 
 ```

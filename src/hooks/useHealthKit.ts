@@ -58,18 +58,11 @@ async function fetchHealthData(): Promise<Omit<DailyHealthState, "useDebugValues
     // Steps: deduplicated total
     const steps = stepResult.totalSteps;
 
-    // Active calories: sum of activeEnergyBurned samples
-    // Since querySteps returns step samples, we need to query active energy separately
-    // For now, estimate from step count (rough: 1 cal per 20 steps)
-    // TODO: Add queryQuantity('activeEnergyBurned') to pwa-kit SDK
-    let activeCalories = 0;
-    try {
-      // Try querying active energy directly via step samples
-      // This is a workaround — the actual active energy type needs SDK support
-      activeCalories = Math.round(steps / 20); // rough estimate
-    } catch {
-      activeCalories = Math.round(steps / 20);
-    }
+    // Active calories: estimated from steps (~1 cal per 20 steps) as a baseline.
+    // The pwa-kit SDK doesn't yet support queryQuantity('activeEnergyBurned'),
+    // so this is a rough approximation. If workout data includes calorie totals
+    // (see below), those override this estimate for users who track workouts.
+    let activeCalories = Math.round(steps / 20);
 
     // Workout minutes: sum of all workout durations
     const workoutMinutes = Math.round(

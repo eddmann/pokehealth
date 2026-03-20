@@ -33,6 +33,14 @@ After each emulated frame, the JS event loop checks this byte. If non-zero, the 
 
 This adds exactly one frame of latency to discrete game events (healing, catching, earning XP/money), which is imperceptible.
 
+## In-game health messages
+
+After each hook completes, the ROM displays a contextual message explaining the health modifier that was applied. JS writes a message ID (1–12) to `wHealthMsgId` in WRAM, and the ROM's `ShowHealthMsg` routine looks up the corresponding text from a jump table and displays it via `PrintText`.
+
+Each event has three messages — penalty, normal, and bonus — and every message names the health input (sleep, calories, workout) so the player understands why the effect occurred. For example, after a Pokémon Center heal with poor sleep: *"Poor sleep last night… Partial heal only!"*
+
+The heal message is deferred until after the healing animation completes, so it appears naturally after the nurse says *"Your Pokémon are fighting fit!"*. XP messages are shown only once per battle to avoid spam when multiple party members gain experience.
+
 ## Emulator integration
 
 [binjgb](https://github.com/binji/binjgb) is compiled to WebAssembly via Emscripten and loaded as a `<script>` tag. The emulator wrapper (`src/lib/emulator.ts`) manages:
