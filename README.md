@@ -8,6 +8,12 @@ Your steps, sleep, calories burned, and workout minutes from the previous day fe
 
 It runs entirely in the browser as a PWA — a [patched Pokémon Red ROM](https://github.com/pret/pokered) inside a [Game Boy emulator](https://github.com/binji/binjgb) compiled to WebAssembly, with health data pulled from HealthKit via [pwa-kit](https://github.com/eddmann/pwa-kit). No server. No account. Everything local.
 
+<p align="center">
+  <img src="docs/screenshot-gameplay.png" alt="Gameplay" width="230">
+  <img src="docs/screenshot-health.png" alt="Health data and active modifiers" width="230">
+  <img src="docs/screenshot-debug.png" alt="Debug panel" width="230">
+</p>
+
 ## How it works
 
 Each day, your health stats map to gameplay modifiers — movement speed, healing quality, XP rate, money earned, and catch rate. The game reads these on every frame and adjusts accordingly. You can inspect your active modifiers from the in-game START → HEALTH menu.
