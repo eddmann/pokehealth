@@ -35,8 +35,8 @@ body {
   padding-right: env(safe-area-inset-right, 0px);
 }
 
-/* ── Prevent text selection / callout on all interactive elements (iOS) ── */
-button, a, [role="button"] {
+/* ── Prevent text selection / callout on all elements (iOS) ── */
+* {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;

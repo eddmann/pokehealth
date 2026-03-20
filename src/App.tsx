@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HealthProvider } from "./stores/healthStore";
 import GameScreen from "./components/GameScreen";
@@ -23,6 +24,16 @@ function AppShell() {
 }
 
 export default function App() {
+  useEffect(() => {
+    const prevent = (e: Event) => e.preventDefault();
+    document.addEventListener("selectstart", prevent);
+    document.addEventListener("contextmenu", prevent);
+    return () => {
+      document.removeEventListener("selectstart", prevent);
+      document.removeEventListener("contextmenu", prevent);
+    };
+  }, []);
+
   return (
     <HealthProvider>
       <BrowserRouter>
